@@ -67,7 +67,7 @@ interface IAsset {
     event InvestmentValueUpdated(uint256 timestamp);
 
     // 向资产添加文档
-    function addDocumentToAsset(Document memory document) external;
+    function updateDocument(Document memory document) external;
 
     // 更新资产信息
     function updateAssetInfo(AssetInfo memory info) external;
@@ -78,6 +78,16 @@ interface IAsset {
     // 更新资产投资价值信息
     function updateInvestmentValue(InvestmentValue memory investmentValue) external;
 
+    function updatePropertyStatus(Status status) external;
+
+    function updateTenancy(Tenancy memory _tenancy) external;
+
     // 获取资产的文档
-    function getAssetDocuments() external view returns (Document[] memory);
+    function getAssetDocument() external view returns (Document memory);
+
+    // 添加Getter方法的声明
+    function getAssetLocation() external view returns (AssetLocationData memory);
+    function getAssetInfo() external view returns (AssetInfo memory);
+    function getInvestmentValue() external view returns (InvestmentValue memory);
+    function getTenancy() external view returns (Tenancy memory);
 }
