@@ -6,16 +6,18 @@ const {
   const { expect } = require("chai");
   const { ethers } = require("hardhat");
   const moment = require('moment');
+  const BigNumber = require('bignumber.js');
 
 
   //npx hardhat test ./test/dormy/DormyTest.js --network polygonMumbai
   describe("Dormy", function () {
 
-    // 用于createAsset的示例数据
-    const sampleAssetInfo = {
+    // 用于createProperty的示例数据
+    const samplePropertyInfo = {
         creation: 1617183873,
-        name: "Test Asset",
-        propertyPrice: "1000000"
+        propertyNumber: "SFT-1",
+        propertyStatus: 0,
+        propertyPrice: 100000000 //美元
     };
 
     const sampleLocationData = {
@@ -30,11 +32,16 @@ const {
 
     const sampleInvestmentValue = {
         propertyPrice: ethers.parseEther("1000"),
-        sftPrice: ethers.parseEther("1"),
+        tokenPrice: ethers.parseEther("0.00001"),
         tokenAmount: 1000,
+        soldQuantity: 0,
         projectedAnnualReturn: 100,
         projectedRentalYield: 10,
-        rentStartDate: 1617183873
+        rentStartDate: 1617183873,
+        saleStartTime: 1703728800,
+        saleEndTime: 1735351200,
+        minPurchase: 1,
+        minIncrement: 10
     };
 
     //先部署资产合约 再部署资产管理合约 再部署3525合约 执行一个mint 方法
@@ -42,52 +49,74 @@ const {
       
       const [owner, otherAccount1,otherAccount2] = await ethers.getSigners();
 
-      // console.log(owner,otherAccount1)
+      const Test20 = await ethers.getContractFactory("Test20");
+      const test20 = await Test20.deploy();
 
       const AccessControl = await ethers.getContractFactory("AccessControl");
       const accessControl = await AccessControl.deploy();
 
-      // const Asset = await ethers.getContractFactory("Asset");
-      // const asset = await Asset.deploy();
-      const AssetManager = await ethers.getContractFactory("AssetManager");
+      // const Property = await ethers.getContractFactory("Property");
+      // const property = await Property.deploy();
+      const PropertyManager = await ethers.getContractFactory("PropertyManager");
 
-      const assetManager = await AssetManager.deploy(accessControl.target);
+      const propertyManager = await PropertyManager.deploy(accessControl.target);
 
       const Dormy = await ethers.getContractFactory("Dormy");
-      const dormy = await Dormy.deploy(assetManager.target,accessControl.target);
+      const dormy = await Dormy.deploy(propertyManager.target,accessControl.target, test20.target);
 
-      return { accessControl,assetManager,dormy, owner, otherAccount1,otherAccount2};
+      return { accessControl,propertyManager,dormy, owner, test20, otherAccount1,otherAccount2};
     }
   
     describe("测试Mint流程", function () {
       it("创建资产管理", async function () {
-        const { accessControl,assetManager,dormy, owner, otherAccount1,otherAccount2 } = await loadFixture(deployDormy)
-
+        const { accessControl,propertyManager,dormy, owner, test20, otherAccount1,otherAccount2 } = await loadFixture(deployDormy)
 
         await accessControl.connect(owner).setRole(otherAccount1.address,2)
         //把资产管理的合约也设成白名单
-        await accessControl.connect(owner).setRole(assetManager.target,1)
-
-        console.log("111")
+        await accessControl.connect(owner).setRole(propertyManager.target,1)
+        //把资Dormy的合约也设成白名单
+        await accessControl.connect(owner).setRole(dormy.target,1)
 
         //新建一个资产
-        const tx = await assetManager.connect(owner).createAsset(
-            sampleAssetInfo.name,
-            sampleAssetInfo,
+        const tx = await propertyManager.connect(owner).createProperty(
+            samplePropertyInfo.propertyNumber,
+            samplePropertyInfo,
             sampleLocationData,
             sampleInvestmentValue
         );
 
-        console.log("222")
-
         const receipt = await tx.wait();
-        let assetInfo1 = await assetManager.getAssetInfo(1)
+        let propertyInfo1 = await propertyManager.getPropertyInfo("SFT-1")
 
-        console.log('assetInfo1:',assetInfo1.name)
+        console.log('propertyInfo1:',propertyInfo1)
 
-        await dormy.connect(otherAccount1).mint(otherAccount1.address,1,10000)
+        const investmentValue = await propertyManager.getPropertyInvestmentValue("SFT-1")
 
-        console.log('assetInfo1:',await dormy.getSlotInfo(1))
+        console.log('property:',investmentValue.tokenPrice, ethers.formatEther(investmentValue.tokenPrice))
+
+        await test20.connect(owner).transfer(otherAccount1,ethers.parseEther("1000000"))
+        
+        const balance = await test20.balanceOf(otherAccount1)
+
+        console.log("balanceTx: ",  ethers.formatEther(balance))
+      
+        const approvalAmountInWei = (new BigNumber(investmentValue.tokenPrice)).times(2);
+
+        console.log("转账金额  ",approvalAmountInWei.toString(),"  可转余额",balance);
+        const approvalAmountInEther = ethers.formatEther(approvalAmountInWei.toString());
+        console.log("授权金额（以 Ether 为单位）：", approvalAmountInEther);
+
+        await test20.connect(otherAccount1).approve(dormy, approvalAmountInWei.toString());
+
+        const allowanceAmount = await test20.allowance(otherAccount1, dormy);
+
+        console.log("可转账金额：", allowanceAmount);
+
+        const txMint = await dormy.connect(otherAccount1).mint(otherAccount1,1,1)
+
+        console.log('propertyInfo1:',txMint)
+
+        // console.log('propertyInfo1:',await dormy.getSlotInfo(1))
 
         //获取到这个资产
 

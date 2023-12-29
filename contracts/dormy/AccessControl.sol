@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 contract AccessControl {
-    enum Role { None, Admin, Trader }
+    enum Role {Admin, Trader }
 
     mapping(address => Role) public roles;
     address[] public admins;   // 管理员地址列表
@@ -42,7 +42,7 @@ contract AccessControl {
         } else if (userRole == Role.Trader) {
             removeTrader(user);
         }
-        roles[user] = Role.None;
+        //TODO 这里应该加个异常
     }
 
     // 检查是否为管理员

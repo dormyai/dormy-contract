@@ -45,7 +45,7 @@ async function main() {
         minIncrement: 10
     };
 
-    const [owner] = await ethers.getSigners();
+    const [owner, otherAccount2] = await ethers.getSigners();
 
 
     const Test20 = await ethers.getContractFactory("Test20");
@@ -59,14 +59,14 @@ async function main() {
     const propertyManager = await PropertyManager.deploy(accessControl.target);
 
     const Dormy = await ethers.getContractFactory("Dormy");
-    const dormy = await Dormy.deploy(propertyManager.target, accessControl.target, test20.target);
+    const dormy = await Dormy.deploy(propertyManager.target,accessControl.target, test20.target);
 
-    await accessControl.connect(owner).setRole("0xe19311ca3d40287b0d088df368509cfc985f44bd",1)//边边
-    await accessControl.connect(owner).setRole("0x0b99C69c2D7A71fb372ACf2756E315A18E5150B1",1)//白起
+    await accessControl.connect(owner).setRole("0xe19311ca3d40287b0d088df368509cfc985f44bd",2)//边边
+    await accessControl.connect(owner).setRole("0x0b99C69c2D7A71fb372ACf2756E315A18E5150B1",2)//白起
 
-    // await accessControl.connect(owner).setRole(owner,0) 默认是管理员
-    await accessControl.connect(owner).setRole(propertyManager.target,0)
-    await accessControl.connect(owner).setRole(dormy.target,0)
+    await accessControl.connect(owner).setRole(owner,1)
+    await accessControl.connect(owner).setRole(propertyManager.target,1)
+    await accessControl.connect(owner).setRole(dormy.target,1)
 
     //新建一个资产
     const tx = await propertyManager.connect(owner).createProperty(
@@ -77,13 +77,13 @@ async function main() {
     );
 
     const receipt = await tx.wait();
-    let propertyInfo1 = await propertyManager.getPropertyInfo("SFT-1")
+    let assetInfo1 = await assetManager.getAssetInfo(1)  
 
-    console.log("propertyInfo1 :",propertyInfo1)
-
-    console.log("权限控制:",accessControl.target,"资产管理合约地址:",propertyManager.target,"Dormy地址:",dormy.target)
+    log.console("资产管理合约地址:",propertyManager.target,"Dormy地址:",dormy.target)
 }
 
+// We recommend this pattern to be able to use async/await everywhere
+// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;

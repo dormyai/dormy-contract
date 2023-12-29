@@ -2,20 +2,24 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@solvprotocol/erc-3525/ERC3525.sol";
-import "./Interface/IAssetManager.sol"; // 引入资产管理合约接口文件
+import "./Interface/IPropertyManager.sol"; // 引入资产管理合约接口文件
+import "./Interface/IProperty.sol";
 import "./AccessControl.sol"; // 引入资产管理合约接口文件
 
 contract Dormy is ERC3525 {
 
     AccessControl public accessControl;
-    IAssetManager public assetManager; // 引入资产管理合约接口
+    IPropertyManager public PropertyManager; // 引入资产管理合约接口
+    IERC20 public uToken;
 
     using Strings for uint256;
 
-    constructor(address assetManagerAddress,address _accessControlAddress) ERC3525("Dormy", "DMY", 18) {
-        assetManager = IAssetManager(assetManagerAddress);
+    constructor(address PropertyManagerAddress,address _accessControlAddress,address _uToken) ERC3525("Dormy", "DMY", 18) {
+        PropertyManager = IPropertyManager(PropertyManagerAddress);
         accessControl = AccessControl(_accessControlAddress);
+        uToken = IERC20(_uToken);
     }
 
     // 修饰符：仅交易员
@@ -27,14 +31,22 @@ contract Dormy is ERC3525 {
     function mint(address to_, uint256 slot_, uint256 amount_) external onlyTrader {
 
         // 在mint方法中验证slot是否存在、是否在可售范围内以及是否已经售出对应份额
-        // IAsset.AssetInfo memory assetInfo = assetManager.getAssetInfo(slot_);
+        // 获取到出售价格,出售状态,总数量,剩余数量
+        Property property = PropertyManager.getPropertyInfoBySolt(slot_);
 
-        // require(keccak256(bytes(assetInfo.name)) == keccak256(bytes("")), "Dormy: the property does not exist");
+        Property.PropertyInfo memory info =  property.getPropertyInfo();
 
+        require(info.propertyStatus != IProperty.PropertyStatus.Active, "Dormy: Property Status Abnormal, Cannot Purchase");
 
-        // 您需要在资产管理合约中实现获取slot信息的方法，并根据需要在这里调用它
-        // 您可以将验证逻辑添加在这里，确保只有符合条件的情况下才执行_mint操作
-        // 根据您的具体需求来实现验证逻辑
+        Property.InvestmentValue memory investmentValue = property.getInvestmentValue();
+
+        //验证可售卖数量是否足够
+        require(investmentValue.tokenAmount > investmentValue.soldQuantity + amount_,"Dormy: Insufficient quantity for purchase");
+        
+        // 调用 USDT 合约的 transfer 函数来扣减代币
+        require(uToken.transferFrom(msg.sender,address(this), investmentValue.tokenPrice * amount_), "Dormy: Insufficient balance");
+
+        PropertyManager.updatePropertySoldQuantity(slot_, investmentValue.soldQuantity + amount_);
 
         _mint(to_, slot_, amount_);
     }
@@ -44,7 +56,6 @@ contract Dormy is ERC3525 {
         // 调用资产管理合约的接口方法来获取slot信息
         // 根据您的具体需求来实现
         // 暂时省略获取slot信息的逻辑
-
         return string(
             abi.encodePacked(
                 '<svg width="600" height="600" xmlns="http://www.w3.org/2000/svg">',
