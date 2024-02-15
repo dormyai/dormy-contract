@@ -18,7 +18,6 @@ async function main() {
         creation: 1617183873,
         propertyNumber: "SFT-1",
         propertyStatus: 0,
-        propertyPrice: 100000000 //美元
     };
 
     const sampleLocationData = {
@@ -32,8 +31,8 @@ async function main() {
     };
 
     const sampleInvestmentValue = {
-        propertyPrice: ethers.parseEther("1000"),
-        tokenPrice: ethers.parseEther("0.00001"),
+        propertyPrice: 100000000, //美元
+        tokenPrice: ethers.parseEther("100"),//100U
         tokenAmount: 1000,
         soldQuantity: 0,
         projectedAnnualReturn: 100,
@@ -42,6 +41,7 @@ async function main() {
         saleStartTime: 1703728800,
         saleEndTime: 1735351200,
         minPurchase: 1,
+        maxPurchase: 10,
         minIncrement: 10
     };
 

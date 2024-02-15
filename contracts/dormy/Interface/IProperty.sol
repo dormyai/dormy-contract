@@ -20,7 +20,6 @@ interface IProperty {
 
     // 资产信息
     struct PropertyInfo {
-        string propertyPrice; //资产价值
         string propertyNumber; //资产编号
         uint64 creation; //创建时间戳
         PropertyStatus propertyStatus;
@@ -44,10 +43,11 @@ interface IProperty {
         uint256 soldQuantity;    // 已售卖数量
         uint256 projectedAnnualReturn;  // 年度总收益
         uint256 projectedRentalYield;   // 租金收益
-        uint256 rentStartDate;          // 租期开始时间
+        uint64 rentStartDate;          // 租期开始时间
         uint64 saleStartTime; //开始售卖
         uint64 saleEndTime; //结束售卖
         uint256 minPurchase;
+        uint256 maxPurchase;
         uint256 minIncrement;
     }
 

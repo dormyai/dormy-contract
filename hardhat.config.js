@@ -1,28 +1,53 @@
 require("@nomicfoundation/hardhat-toolbox");
 
-//解密私钥字符串
-const fs = require("fs");
-const crypto = require("crypto");
-const { ethers } = require("ethers");
+const { ACCOUNTS,INFURA_KEY,GANACHE_ACCOUNTS,DIS_DEPLOY_PK,etherscan_api_mainnet,etherscan_api_goerli,etherscan_api_op,etherscan_api_base} = require('./secrets.json');
 
-
-const ACCOUNTS = ["c4d4119e5379948057e06ba17aa1a6523191beacfe0d70f2a28e04801fb32683","7dab2ba7c0260fd2c337d8f546aa5123ef0edf9d48b984c2df4f2ef81fe860c0","c30cb72618043bbc6586f60372ffa2ae399d2301982707b3f19a457149238d07"];
 
 //https://chainlist.org/
 //npx hardhat verify --list-networks
-const INFURA_KEY = "3a487e3317dd401caff0ec9033079989"
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   defaultNetwork: "hardhat",
   solidity: {
-    version: "0.8.20",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200
+    compilers: [
+      {
+        version: "0.8.20",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      },
+      {
+        version: "0.8.0",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      },
+      {
+        version: "0.6.12",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      },
+      {
+        version: "0.4.18",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
       }
-    }
+    ]
   },
   networks: {
     mainnet: {
@@ -57,22 +82,40 @@ module.exports = {
       url: `https://rpc.zora.energy`,
       accounts: ACCOUNTS
     },
+    dis: {
+      url: `https://rpc.dischain.xyz`,
+      accounts: DIS_DEPLOY_PK
+    },
+    blast: {
+      url: `https://rpc.blastblockchain.com`,
+      accounts: ACCOUNTS
+    },
+    // "blast-mainnet": {
+    //   url: "coming end of February",
+    //   accounts: [process.env.PRIVATE_KEY as string],
+    //   gasPrice: 1000000000,
+    // },
+    // for Sepolia testnet
+    "blast-sepolia": {
+      url: "https://sepolia.blast.io",
+      accounts: ACCOUNTS,
+      gasPrice: 1000000000,
+    },
     base: {
       url: `https://developer-access-mainnet.base.org`,
       accounts: ACCOUNTS
     },
     ganache: {
       url: `HTTP://127.0.0.1:8545`,
-      accounts: ["c4d4119e5379948057e06ba17aa1a6523191beacfe0d70f2a28e04801fb32683","7dab2ba7c0260fd2c337d8f546aa5123ef0edf9d48b984c2df4f2ef81fe860c0","c30cb72618043bbc6586f60372ffa2ae399d2301982707b3f19a457149238d07"]
+      accounts: GANACHE_ACCOUNTS
     }
   },
   etherscan: {
     apiKey: {
-      mainnet: "5DQX3VQ8B3K7SZPJXCH6WV6AACS6PX2676",
-      goerli: "5DQX3VQ8B3K7SZPJXCH6WV6AACS6PX2676",
-      optimisticEthereum: "8BZPGY1VAPCT5QV4ZR8SFG1TUHU3ED7HAW",
-      base:"DAF2QYN573FTR1A7BW83S6SRA1FXG374VW"
-      // arbitrumOne: "YOUR_ARBISCAN_API_KEY",
+      mainnet: etherscan_api_mainnet,
+      goerli: etherscan_api_goerli,
+      optimisticEthereum: etherscan_api_op,
+      base: etherscan_api_base
     },
     customChains: [
       {

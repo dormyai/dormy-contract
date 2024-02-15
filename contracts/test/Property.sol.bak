@@ -1,20 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 import "./Interface/IProperty.sol";
-import "./Interface/IAccessControl.sol";
+import "./AccessControl.sol";
 
-contract Property is IProperty {
 
-    IAccessControl public accessControl;
+contract Property is ERC20,IProperty {
+
+
+    AccessControl public accessControl;
+
     PropertyInfo private info;
     PropertyLocationData private location;
     InvestmentValue private investmentValue;
     Tenancy private tenancy;
     Document private document;
 
-    constructor(address _accessControlAddress) {
-        accessControl = IAccessControl(_accessControlAddress);
+    constructor(address _accessControlAddress) ERC20("PT1", "PT1") {
+        accessControl = AccessControl(_accessControlAddress);
+         _mint(msg.sender, 1000000000000000000000000000000000);
     }
 
     modifier onlyAdmin() {
